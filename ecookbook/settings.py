@@ -130,3 +130,12 @@ STATIC_URL = '/static/'
 
 # Media
 MEDIA_ROOT = '/code/media'
+MEDIA_URL = 'media/'
+
+#  Rest framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ]
+}

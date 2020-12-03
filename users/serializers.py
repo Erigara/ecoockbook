@@ -1,18 +1,35 @@
-from django.contrib.auth import password_validation
+from django.contrib.auth import password_validation, authenticate
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from users.models import User
 from users.utils import validate_passwords
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'about']
+        read_only_fields = ['id', 'username']
+
+
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
-        style={'input_type': 'password'},
+        style={
+            'input_type': 'password',
+            'placeholder': _('password'),
+        },
         required=True,
         write_only=True,
+        validators=[password_validation.validate_password]
     )
     password_confirmed = serializers.CharField(
-        style={'input_type': 'password'},
+        style={
+            'input_type': 'password',
+            'placeholder': _('confirm password'),
+        },
         required=True,
         write_only=True,
     )
@@ -22,10 +39,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         password_confirmed = attrs.pop('password_confirmed')
         validate_passwords(password, password_confirmed)
         return attrs
-
-    def validate_password(self, password):
-        password_validation.validate_password(password)
-        return password
 
     def create(self, validated_data):
         user = User.objects.create_user(username=validated_data.pop('username'),
@@ -40,3 +53,36 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'phone_number', 'password', 'password_confirmed']
         read_only_fields = ['id']
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(
+        style={
+            'placeholder': _('username'),
+        },
+        max_length=150,
+        required=True,
+        write_only=True,
+        validators=[UnicodeUsernameValidator()]
+    )
+    password = serializers.CharField(
+        style={
+            'input_type': 'password',
+            'placeholder': _('password'),
+        },
+        required=True,
+        write_only=True,
+        validators=[password_validation.validate_password]
+    )
+
+    def validate(self, attrs):
+        request = self.context['request']
+        if request.user.is_authenticated:
+            raise ValidationError(_("Already logged in."))
+        username = attrs.get('username')
+        password = attrs.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is None:
+            raise ValidationError({'password': _("Wrong username or password.")})
+        attrs['user'] = user
+        return attrs
