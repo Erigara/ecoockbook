@@ -1,15 +1,26 @@
 from django.contrib.auth import logout, login
+from rest_framework import mixins, viewsets
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from users.models import User
+from users.permissions import IsItselfOrReadOnly
 from users.serializers import RegistrationSerializer, LoginSerializer, UserSerializer
 
 
+class UserViewSet(mixins.ListModelMixin,
+                  mixins.RetrieveModelMixin,
+                  viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated, IsItselfOrReadOnly)
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
+
 class RegistrationView(CreateAPIView):
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
 
 

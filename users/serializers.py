@@ -9,9 +9,16 @@ from users.utils import validate_passwords
 
 
 class UserSerializer(serializers.ModelSerializer):
+    def update(self, instance, validated_data):
+        # delete previous avatar before uploading new one
+        if 'avatar' in validated_data:
+            instance.avatar.delete(save=False)
+        instance = super(UserSerializer, self).update(instance, validated_data)
+        return instance
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'about']
+        fields = ['id', 'username', 'avatar', 'first_name', 'last_name', 'email', 'phone_number', 'about']
         read_only_fields = ['id', 'username']
 
 
