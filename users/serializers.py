@@ -8,7 +8,7 @@ from users.models import User
 from users.utils import validate_passwords
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
     def update(self, instance, validated_data):
         # delete previous avatar before uploading new one
         if 'avatar' in validated_data:
@@ -18,8 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'avatar', 'first_name', 'last_name', 'email', 'phone_number', 'about']
-        read_only_fields = ['id', 'username']
+        fields = ['url', 'id', 'username', 'avatar', 'first_name', 'last_name', 'email', 'phone_number', 'about']
+        read_only_fields = ['url', 'id', 'username']
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
