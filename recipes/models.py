@@ -34,6 +34,15 @@ class Recipe(models.Model):
     def bookmarks_number(self):
         return self.bookmarks.count()
 
+    def set_like(self, chef: Chef):
+        self.likes.add(chef)
+
+    def remove_like(self, chef: Chef):
+        self.likes.remove(chef)
+
+    def has_like(self, chef: Chef) -> bool:
+        return self.likes.filter(id=chef.id).count() > 0
+
     def __str__(self):
         return f'{self.author}:{self.title}/{self.publication_time :%c}'
 
@@ -47,8 +56,12 @@ class RecipeImage(models.Model):
 class Step(models.Model):
     id = models.AutoField(primary_key=True)
     recipe = models.ForeignKey(Recipe, related_name='steps', on_delete=models.CASCADE, default=None)
+    order = models.IntegerField(unique=True)
     description = models.TextField(_('description'))
     image = models.ImageField(_('image'), upload_to=step_image_upload_to, blank=True)
+
+    class Meta:
+        ordering = ['order']
 
 
 class Product(models.Model):
