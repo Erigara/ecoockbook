@@ -1,5 +1,5 @@
 from django.contrib import admin, auth
-from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef
+from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like
 from django.utils.translation import gettext_lazy as _
 
 
@@ -9,22 +9,24 @@ class NutritionInline(admin.TabularInline):
 
 class ProductInline(admin.TabularInline):
     model = Product
+    extra = 0
 
 
 class RecipeImageInline(admin.TabularInline):
     model = RecipeImage
-
+    extra = 0
 
 class StepInline(admin.StackedInline):
     model = Step
+    extra = 0
 
 
 @admin.register(Recipe)
-class Recipe(admin.ModelAdmin):
+class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'publication_time')
     fieldsets = (
-        (_('General info'), {'fields': ('title', 'author', 'publication_time')}),
-        (_('Abstract'), {'fields': ('cooking_time', 'servings')}),
+        (_('general info'), {'fields': ('title', 'author', 'publication_time')}),
+        (_('abstract'), {'fields': ('cooking_time', 'servings')}),
         (_('Payload'), {
             'fields': ('description', ),
         }),
@@ -39,17 +41,20 @@ class Recipe(admin.ModelAdmin):
     search_fields = ('title', 'author', 'publication_time')
 
 
-class ChefInline(admin.StackedInline):
-    model = Chef
-    can_delete = False
+class LikeInline(admin.TabularInline):
+    model = Like
+    extra = 0
 
 
-# хак, чтобы получить текущую модель UserAdmin
-UserAdmin = admin.site._registry[auth.get_user_model()].__class__
-class InlinedChefUserAdmin(UserAdmin):
-    inlines = (*UserAdmin.inlines, ChefInline)
+class OwnRecipesInline(admin.StackedInline):
+    model = Recipe
+    extra = 0
+    verbose_name = _('own recipe')
+    verbose_name_plural = _('own recipes')
 
 
-# Re-register UserAdmin
-admin.site.unregister(auth.get_user_model())
-admin.site.register(auth.get_user_model(), InlinedChefUserAdmin)
+@admin.register(Chef)
+class ChefAdmin(admin.ModelAdmin):
+    readonly_fields = ('id', 'user')
+    inlines = [OwnRecipesInline, LikeInline]
+

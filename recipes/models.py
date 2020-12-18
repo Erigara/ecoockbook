@@ -1,8 +1,8 @@
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from recipes.utils import step_image_upload_to, recipe_image_upload_to
 
@@ -10,8 +10,13 @@ from recipes.utils import step_image_upload_to, recipe_image_upload_to
 class Chef(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    likes = models.ManyToManyField('Recipe', related_name='likes', blank=True)
-    bookmarks = models.ManyToManyField('Recipe', related_name='bookmarks', blank=True)
+    likes = models.ManyToManyField(
+        'Recipe',
+        related_name='likes',
+        through='Like',
+        through_fields=('chef', 'recipe'),
+        blank=True
+    )
 
     def __str__(self):
         return self.user.username
@@ -20,28 +25,15 @@ class Chef(models.Model):
 class Recipe(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(_('title'), max_length=64)
-    author = models.ForeignKey(Chef, on_delete=models.DO_NOTHING)
+    author = models.ForeignKey(Chef, related_name='own_recipes', on_delete=models.DO_NOTHING)
     publication_time = models.DateTimeField(_('publication time'), default=timezone.now)
     cooking_time = models.DurationField(_('cooking time'))
     servings = models.SmallIntegerField(_('number of servings'))
     description = models.TextField(_('description'))
 
     @property
-    def likes_number(self):
+    def likes_amount(self):
         return self.likes.count()
-
-    @property
-    def bookmarks_number(self):
-        return self.bookmarks.count()
-
-    def set_like(self, chef: Chef):
-        self.likes.add(chef)
-
-    def remove_like(self, chef: Chef):
-        self.likes.remove(chef)
-
-    def has_like(self, chef: Chef) -> bool:
-        return self.likes.filter(id=chef.id).count() > 0
 
     def __str__(self):
         return f'{self.author}:{self.title}/{self.publication_time :%c}'
@@ -113,3 +105,18 @@ class Nutrition(models.Model):
                                         validators=[MinValueValidator(0.0)])
     fat = models.DecimalField(_('carbohydrates'), max_digits=6, decimal_places=2,
                               validators=[MinValueValidator(0.0)])
+
+
+class Like(models.Model):
+    id = models.AutoField(primary_key=True)
+    chef = models.ForeignKey(Chef, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    creation_time = models.DateTimeField(_('creation time'), default=timezone.now)
+
+    # если объект модели не сохранен в бд, то лайк ещё не стоит
+    @property
+    def has_like(self):
+        return not self._state.adding
+
+    class Meta:
+        unique_together = ['chef', 'recipe']

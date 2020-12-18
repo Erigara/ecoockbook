@@ -1,7 +1,8 @@
 from rest_framework import generics, viewsets, mixins
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from recipes.models import Recipe, Chef
+from recipes.models import Recipe, Chef, Like
 from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer
 
 
@@ -33,41 +34,58 @@ class RecipeView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Recipe.objects.all()
 
 
-class LikeView(ChefMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
+class LikeView(ChefMixin,
+               mixins.RetrieveModelMixin,
+               mixins.CreateModelMixin,
+               mixins.DestroyModelMixin,
+               generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = LikeSerializer
-    queryset = Recipe.objects.all()
+    lookup_url_kwarg = 'recipe'
+
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
 
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        # костыль чтобы не плодить код
-        self._remove = True
-        return self.update(request, *args, **kwargs)
+        return self.destroy(request, *args, **kwargs)
 
-    def perform_update(self, serializer):
-        remove = getattr(self, '_remove', False)
-        serializer.save(chef=self.chef, remove=remove)
+    def get_queryset(self):
+        return Like.objects.filter(chef=self.chef)
 
-# TODO использовать LikeSerilizer
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        recipe = self.recipe
+        try:
+            obj = queryset.get(recipe=recipe)
+        except Like.DoesNotExist:
+            obj = Like(
+                chef=self.chef,
+                recipe=recipe,
+            )
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    @property
+    def recipe(self) -> Recipe:
+        return get_object_or_404(Recipe, pk=self.kwargs[self.lookup_url_kwarg])
+
+    def perform_create(self, serializer):
+        serializer.save(recipe=self.recipe, chef=self.chef)
+
+    def perform_destroy(self, instance):
+        if not instance._state.adding:
+            instance.delete()
+
+
 class LikeListView(ChefMixin, generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = RecipeSerializer
+    serializer_class = LikeSerializer
 
     def get_queryset(self):
-        return self.chef.likes.all()
-
-
-class BookmarkListView(ChefMixin, generics.ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = RecipeSerializer
-
-    def get_queryset(self):
-        return self.chef.bookmarks.all()
+        return Like.objects.filter(chef=self.chef)

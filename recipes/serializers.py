@@ -1,12 +1,14 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef
+from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like
 
 
 class ChefSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Chef
-        fields = ['url', 'user', 'likes', 'bookmarks']
+        fields = ['url', 'user', 'likes']
         read_only_fields = ['url', 'user']
 
 
@@ -34,10 +36,64 @@ class StepSerializer(serializers.ModelSerializer):
         fields = ['description', 'image']
 
 
+class LikeSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        read_only=True,
+        view_name='like-detail',
+        lookup_url_kwarg='recipe',
+        lookup_field='recipe_id'
+    )
+    user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        source='chef.user',
+        read_only=True
+    )
+    recipe = serializers.HyperlinkedRelatedField(
+        view_name='recipe-detail',
+        read_only=True
+    )
+    likes_amount = serializers.IntegerField(source='recipe.likes_amount', read_only=True)
+
+    def create(self, validated_data) -> Like:
+        recipe = validated_data.get('recipe')
+        chef = validated_data.get('chef')
+
+        if Like.objects.filter(recipe=recipe, chef=chef).count() == 0:
+            like = Like.objects.create(
+                recipe=recipe,
+                chef=chef
+            )
+        else:
+            raise ValidationError(_('already set'))
+
+        return like
+
+    class Meta:
+        model = Like
+        fields = [
+            'url',
+            'recipe',
+            'user',
+            'has_like',
+            'likes_amount',
+            'creation_time',
+        ]
+        read_only_fields = ['url', 'creation_time']
+
+
 # TODO обработка вложенных серилизаторов
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
-    likes_number = serializers.IntegerField(read_only=True)
-    bookmarks_number = serializers.IntegerField(read_only=True)
+    like = serializers.HyperlinkedRelatedField(
+        view_name='like-detail',
+        lookup_url_kwarg='recipe',
+        read_only=True,
+        source='id'
+    )
+    author = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        source='author.user',
+        read_only=True
+    )
     nutrition = NutritionSerializer()
     products = ProductSerializer(many=True)
     images = RecipeImageSerializer(many=True)
@@ -47,47 +103,16 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url',
-            'id',
+            'like',
             'title',
             'author',
             'publication_time',
             'cooking_time',
             'servings',
             'description',
-            'likes_number',
-            'bookmarks_number',
             'nutrition',
             'products',
             'images',
             'steps',
         ]
         read_only_fields = ['url', 'publication_time', 'author']
-
-
-# TODO валидация на то, что chef не None
-# TODO Заменить ModelSerializer на Serializer
-class LikeSerializer(serializers.Serializer):
-    likes_number = serializers.IntegerField(read_only=True)
-    has_like = serializers.SerializerMethodField()
-
-    def update(self, instance: Recipe, validated_data) -> Recipe:
-        chef = self.context.get('chef')
-        remove = validated_data.pop('remove', False)
-        if remove:
-            instance.remove_like(chef)
-        else:
-            instance.set_like(chef)
-        instance.save()
-        return instance
-
-    def get_has_like(self, instance: Recipe) -> bool:
-        chef = self.context.get('chef')
-        return instance.has_like(chef)
-
-    class Meta:
-        model = Recipe
-        fields = [
-            'url',
-            'likes_number',
-            'has_like'
-        ]
