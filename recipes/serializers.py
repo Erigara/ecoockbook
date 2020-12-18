@@ -65,7 +65,8 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 # TODO валидация на то, что chef не None
-class LikeSerializer(serializers.HyperlinkedModelSerializer):
+# TODO Заменить ModelSerializer на Serializer
+class LikeSerializer(serializers.Serializer):
     likes_number = serializers.IntegerField(read_only=True)
     has_like = serializers.SerializerMethodField()
 
