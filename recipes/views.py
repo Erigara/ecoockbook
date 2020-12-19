@@ -1,9 +1,11 @@
 from rest_framework import generics, viewsets, mixins
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from recipes.models import Recipe, Chef, Like
-from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer
+from recipes.models import Recipe, Chef, Like, Category
+from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer
 
 
 class ChefMixin:
@@ -20,6 +22,45 @@ class ChefViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = ChefSerializer
     queryset = Chef.objects.all()
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+
+    @action(detail=True)
+    def recipes(self, request, pk=None):
+        queryset = self.get_object().recipes
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = RecipeSerializer(page, many=True, context=self.get_serializer_context())
+            return self.get_paginated_response(serializer.data)
+
+        serializer = RecipeSerializer(queryset, many=True, context=self.get_serializer_context())
+        return Response(serializer.data)
+
+
+
+class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RecipeSerializer
+    queryset = Recipe.objects.all()
+
+    @action(detail=False)
+    def favorites(self, request):
+        queryset = self.chef.likes.all()
+        return self._list_queryset(queryset)
+
+    def _list_queryset(self, queryset):
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 
 class RecipeListCreateView(generics.ListCreateAPIView):
@@ -83,9 +124,18 @@ class LikeView(ChefMixin,
             instance.delete()
 
 
-class LikeListView(ChefMixin, generics.ListAPIView):
+class LikedRecipeListView(ChefMixin, generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = LikeSerializer
+    serializer_class = RecipeSerializer
 
     def get_queryset(self):
-        return Like.objects.filter(chef=self.chef)
+        return self.chef.likes.all()
+
+
+class InCategoryRecipeListView(ChefMixin, generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = RecipeSerializer
+
+    def get_queryset(self):
+        return Recipe.objects.filter(category__pk=self.kwargs['category'])
+

@@ -1,5 +1,5 @@
 from django.contrib import admin, auth
-from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like
+from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like, Category
 from django.utils.translation import gettext_lazy as _
 
 
@@ -25,7 +25,7 @@ class StepInline(admin.StackedInline):
 class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'publication_time')
     fieldsets = (
-        (_('general info'), {'fields': ('title', 'author', 'publication_time')}),
+        (_('general info'), {'fields': ('title', 'author', 'publication_time', 'category')}),
         (_('abstract'), {'fields': ('cooking_time', 'servings')}),
         (_('Payload'), {
             'fields': ('description', ),
@@ -58,3 +58,7 @@ class ChefAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'user')
     inlines = [OwnRecipesInline, LikeInline]
 
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    readonly_fields = ('id',)

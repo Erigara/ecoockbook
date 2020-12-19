@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like
+from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like, Category
 
 
 class ChefSerializer(serializers.HyperlinkedModelSerializer):
@@ -10,6 +10,18 @@ class ChefSerializer(serializers.HyperlinkedModelSerializer):
         model = Chef
         fields = ['url', 'user', 'likes']
         read_only_fields = ['url', 'user']
+
+
+class CategorySerializer(serializers.HyperlinkedModelSerializer):
+    recipes = serializers.HyperlinkedRelatedField(
+        view_name='category-recipes',
+        read_only=True,
+        source='*'
+    )
+    class Meta:
+        model = Category
+        fields = ['url', 'name', 'image', 'recipes']
+        read_only_fields = ['url']
 
 
 class NutritionSerializer(serializers.ModelSerializer):
@@ -39,7 +51,7 @@ class StepSerializer(serializers.ModelSerializer):
 class LikeSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         read_only=True,
-        view_name='like-detail',
+        view_name='likes',
         lookup_url_kwarg='recipe',
         lookup_field='recipe_id'
     )
@@ -84,7 +96,7 @@ class LikeSerializer(serializers.HyperlinkedModelSerializer):
 # TODO обработка вложенных серилизаторов
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     like = serializers.HyperlinkedRelatedField(
-        view_name='like-detail',
+        view_name='likes',
         lookup_url_kwarg='recipe',
         read_only=True,
         source='id'

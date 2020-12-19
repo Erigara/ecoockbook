@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from recipes.utils import step_image_upload_to, recipe_image_upload_to
+from ecookbook.utils import upload_to
 
 
 class Chef(models.Model):
@@ -22,10 +22,23 @@ class Chef(models.Model):
         return self.user.username
 
 
+class Category(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(_('category title'), unique=True, max_length=64)
+    image = models.ImageField(_('category image'), upload_to=upload_to('recipes/category_image'), blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('category')
+        verbose_name_plural = _('categories')
+
 class Recipe(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(_('title'), max_length=64)
     author = models.ForeignKey(Chef, related_name='own_recipes', on_delete=models.DO_NOTHING)
+    category = models.ForeignKey(Category, related_name='recipes', null=True, on_delete=models.SET_NULL)
     publication_time = models.DateTimeField(_('publication time'), default=timezone.now)
     cooking_time = models.DurationField(_('cooking time'))
     servings = models.SmallIntegerField(_('number of servings'))
@@ -42,7 +55,7 @@ class Recipe(models.Model):
 class RecipeImage(models.Model):
     id = models.AutoField(primary_key=True)
     recipe = models.ForeignKey(Recipe, related_name='images', on_delete=models.CASCADE, default=None)
-    image = models.ImageField(_('recipe image'), upload_to=recipe_image_upload_to, blank=True)
+    image = models.ImageField(_('recipe image'), upload_to=upload_to('recipes/recipe_image'), blank=True)
 
 
 class Step(models.Model):
@@ -50,7 +63,7 @@ class Step(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='steps', on_delete=models.CASCADE, default=None)
     order = models.IntegerField(unique=True)
     description = models.TextField(_('description'))
-    image = models.ImageField(_('image'), upload_to=step_image_upload_to, blank=True)
+    image = models.ImageField(_('step image'), upload_to=upload_to('recipes/step_image'), blank=True)
 
     class Meta:
         ordering = ['order']
