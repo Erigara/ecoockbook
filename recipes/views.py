@@ -1,10 +1,11 @@
-from rest_framework import generics, viewsets, mixins, status
+from rest_framework import generics, viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 
 from recipes.models import Recipe, Chef, Like, Category, RecipeImage, Step, Product
+from recipes.permissions import IsRecipeComponentAuthor, IsRecipeComponentPublished, IsRecipePublished, IsRecipeAuthor
 from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer, \
     RecipeImageSerializer, StepSerializer, ProductSerializer, MoveStepSerializer
 
@@ -31,13 +32,13 @@ class RecipeMixin:
 
 
 class ChefViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated,]
     serializer_class = ChefSerializer
     queryset = Chef.objects.all()
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
 
@@ -54,9 +55,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class RecipeComponentViewSet(RecipeMixin, viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
     serializer_class = None
     model = None
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsRecipeComponentPublished | (IsAuthenticated & IsRecipeComponentAuthor)]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAuthenticated, IsRecipeComponentAuthor, ~ IsRecipeComponentPublished]
+        else:
+            permission_classes = []
+
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         if self.model is None:
@@ -68,13 +78,11 @@ class RecipeComponentViewSet(RecipeMixin, viewsets.ModelViewSet):
 
 
 class RecipeImageViewSet(RecipeComponentViewSet):
-    permission_classes = (IsAuthenticated, )
     serializer_class = RecipeImageSerializer
     model = RecipeImage
 
 
 class StepViewSet(RecipeComponentViewSet):
-    permission_classes = (IsAuthenticated, )
     serializer_class = StepSerializer
     model = Step
 
@@ -84,6 +92,7 @@ class StepViewSet(RecipeComponentViewSet):
 
 
 class MoveStepView(RecipeMixin, generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, IsRecipeComponentAuthor, ~ IsRecipeComponentPublished]
     serializer_class = MoveStepSerializer
 
     def get_queryset(self):
@@ -106,18 +115,30 @@ class MoveStepView(RecipeMixin, generics.GenericAPIView):
 
 
 class ProductViewSet(RecipeComponentViewSet):
-    permission_classes = (IsAuthenticated, )
     serializer_class = ProductSerializer
     model = Product
 
 
 class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticated,)
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
 
+    def get_permissions(self):
+        if self.action == 'list':
+            permission_classes = [AllowAny]
+        elif self.action in ['favorites', 'own', 'template']:
+            permission_classes = [IsAuthenticated]
+        elif self.action == 'retrieve':
+            permission_classes = [IsRecipePublished | (IsAuthenticated & IsRecipeAuthor)]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAuthenticated, IsRecipeAuthor, ~ IsRecipePublished]
+        else:
+            permission_classes = []
+
+        return [permission() for permission in permission_classes]
+
     @action(detail=False, methods=['post'])
-    def template(self, requst):
+    def template(self, request):
         instance = Recipe.template(author=self.chef)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -151,7 +172,7 @@ class LikeView(ChefMixin,
                mixins.CreateModelMixin,
                mixins.DestroyModelMixin,
                generics.GenericAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated, IsRecipeComponentPublished]
     serializer_class = LikeSerializer
 
     def get(self, request, *args, **kwargs):

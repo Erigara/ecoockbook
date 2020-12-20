@@ -187,7 +187,7 @@ class LikeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
-    like = serializers.HyperlinkedRelatedField(
+    likes = serializers.HyperlinkedRelatedField(
         view_name='recipe-like',
         lookup_url_kwarg='recipe',
         read_only=True,
@@ -297,7 +297,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url',
-            'like',
+            'likes',
             'title',
             'published',
             'category',
