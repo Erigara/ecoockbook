@@ -96,6 +96,13 @@ class StepSerializer(serializers.HyperlinkedModelSerializer):
         source='*',
         read_only=True
     )
+    move = RelatedHyperlink(
+        view_name='recipe-step-detail-move',
+        lookup_fields=['recipe.pk', 'pk'],
+        lookup_url_kwargs=['recipe', 'pk'],
+        source='*',
+        read_only=True
+    )
 
     def create(self, validated_data):
         recipe = validated_data.get('recipe')
@@ -117,7 +124,7 @@ class StepSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Step
-        fields = ['url', 'description', 'image', 'order']
+        fields = ['url', 'description', 'image', 'order', 'move']
         read_only_fields = ['order']
 
 
