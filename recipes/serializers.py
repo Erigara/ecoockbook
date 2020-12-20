@@ -133,10 +133,10 @@ class MoveStepSerializer(serializers.Serializer):
 
     def validate_order(self, value):
         if value < 0:
-            raise ValidationError('Order must be positve number')
+            raise ValidationError(_('Order must be positve number'))
 
         if value > Step.objects.current_order(self.context['recipe']):
-            raise ValidationError('Order must be positve number')
+            raise ValidationError(_('Trying to move out of bounds'))
 
         return value
 
@@ -212,6 +212,8 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
                 raise ValidationError({'images': _('Add at least 1 image of the dish.')})
             if self.instance.products.count() < 1:
                 raise ValidationError({'products': _('Add at least 1 product.')})
+            if not self.instance.category:
+                raise ValidationError({'category': _('Choose availbale category')})
         return attrs
 
     def create(self, validated_data):
