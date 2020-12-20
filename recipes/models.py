@@ -106,8 +106,6 @@ class StepManager(models.Manager):
                     recipe=obj.recipe,
                     order__lt=obj.order,
                     order__gte=new_order,
-                ).exclude(
-                    pk=obj.pk
                 ).update(
                     order=F('order') + 1,
                 )
@@ -116,8 +114,6 @@ class StepManager(models.Manager):
                     recipe=obj.recipe,
                     order__lte=new_order,
                     order__gt=obj.order,
-                ).exclude(
-                    pk=obj.pk,
                 ).update(
                     order=F('order') - 1,
                 )
