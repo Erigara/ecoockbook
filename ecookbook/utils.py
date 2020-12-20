@@ -40,8 +40,10 @@ class RelatedHyperlink(serializers.HyperlinkedRelatedField):
     lookup_fields = None
 
     def __init__(self, view_name=None, **kwargs):
-        self.lookup_fields = kwargs.pop('lookup_fields', [self.lookup_field, ])
-        self.lookup_url_kwargs = kwargs.pop('lookup_url_kwargs', [self.lookup_field, ])
+        lookup_field = kwargs.get('lookup_field', self.lookup_field)
+        lookup_url_kwarg = kwargs.get('lookup_url_kwarg', lookup_field)
+        self.lookup_fields = kwargs.pop('lookup_fields', [lookup_field, ])
+        self.lookup_url_kwargs = kwargs.pop('lookup_url_kwargs', [lookup_url_kwarg, ])
         super().__init__(view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, format=None):

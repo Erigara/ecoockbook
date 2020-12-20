@@ -200,9 +200,25 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     )
     nutrition = NutritionSerializer()
     cooking_time = CookingTimeSerializer()
-    products = ProductSerializer(many=True, read_only=True)
-    images = RecipeImageSerializer(many=True, read_only=True)
-    steps = StepSerializer(many=True, read_only=True)
+    products = RelatedHyperlink(
+        view_name='recipe-product-list',
+        lookup_url_kwarg='recipe',
+        read_only=True,
+        source='*'
+    )
+    images = RelatedHyperlink(
+        view_name='recipe-image-list',
+        lookup_url_kwarg='recipe',
+        read_only=True,
+        source='*'
+    )
+    steps = RelatedHyperlink(
+        view_name='recipe-step-list',
+        lookup_url_kwarg='recipe',
+        read_only=True,
+        source='*'
+    )
+
 
     def validate_published(self, value):
         instance = self.instance
