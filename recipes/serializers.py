@@ -1,4 +1,5 @@
 from django.db.models import F
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -203,23 +204,36 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     images = RecipeImageSerializer(many=True, read_only=True)
     steps = StepSerializer(many=True, read_only=True)
 
+    def validate_published(self, value):
+        instance = self.instance
+        if self.instance:
+            published = instance.published
+            if published and not value:
+                raise ValidationError(_("Recipe can't be unpublished"))
+        return value
+
     def validate(self, attrs):
-        published = attrs.get('published')
+        published = attrs.get('published', False)
         if published:
-            if self.instance.steps.count() < 3:
+            instance = self.instance
+            if self.instance is None:
+                raise ValidationError({'published': _("Recipe can't be published in current state")})
+            if instance.steps.count() < 3:
                 raise ValidationError({'steps': _('Number of steps in recipe is too low. Add at least 3 steps.')})
-            if self.instance.images.count() < 1:
+            if instance.images.count() < 1:
                 raise ValidationError({'images': _('Add at least 1 image of the dish.')})
-            if self.instance.products.count() < 1:
+            if instance.products.count() < 1:
                 raise ValidationError({'products': _('Add at least 1 product.')})
-            if not self.instance.category:
+            if not instance.category:
                 raise ValidationError({'category': _('Choose availbale category')})
         return attrs
 
     def create(self, validated_data):
         nutrition_data = validated_data.pop('nutrition', None)
         cooking_time_data = validated_data.pop('cooking_time', None)
-
+        published = validated_data.get('published', False)
+        if published:
+            validated_data |= {'publication_time': timezone.now()}
         recipe = Recipe.objects.create(**validated_data)
 
         if nutrition_data:
@@ -232,11 +246,17 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             serializer = CookingTimeSerializer()
             serializer.create(cooking_time_data)
 
+        return recipe
+
     def update(self, instance: Recipe, validated_data):
         nutrition_data = validated_data.pop('nutrition', None)
         cooking_time_data = validated_data.pop('cooking_time', None)
+        published = validated_data.get('published', False)
 
         recipe = instance
+
+        if published and not recipe.published:
+            validated_data |= {'publication_time': timezone.now()}
         recipe = super().update(recipe, validated_data)
 
         if nutrition_data:
