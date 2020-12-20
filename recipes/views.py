@@ -4,8 +4,9 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import Recipe, Chef, Like, Category
-from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer
+from recipes.models import Recipe, Chef, Like, Category, RecipeImage, Step, Product
+from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer, \
+    RecipeImageSerializer, StepSerializer, ProductSerializer
 
 
 class ChefMixin:
@@ -16,6 +17,13 @@ class ChefMixin:
     def get_serializer_context(self):
         context = super().get_serializer_context()
         return context | {'chef': self.chef}
+
+
+class RecipeMixin:
+    @property
+    def recipe(self):
+        recipe = get_object_or_404(Recipe, pk=self.kwargs['recipe'])
+        return recipe
 
 
 class ChefViewSet(viewsets.ModelViewSet):
@@ -41,15 +49,57 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class RecipeComponentViewSet(RecipeMixin, viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = None
+    model = None
+
+    def get_queryset(self):
+        if self.model is None:
+            raise NotImplemented('Subclass of RecipeViewSet must override model')
+        return self.model.objects.filter(recipe=self.recipe)
+
+    def perform_create(self, serializer):
+        serializer.save(recipe=self.recipe)
+
+
+class RecipeImageViewSet(RecipeComponentViewSet):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = RecipeImageSerializer
+    model = RecipeImage
+
+
+class StepViewSet(RecipeComponentViewSet):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = StepSerializer
+    model = Step
+
+
+class ProductViewSet(RecipeComponentViewSet):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = ProductSerializer
+    model = Product
+
 
 class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
 
+    @action(detail=False, methods=['post'])
+    def template(self, requst):
+        instance = Recipe.template(author=self.chef)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     @action(detail=False)
     def favorites(self, request):
         queryset = self.chef.likes.all()
+        return self._list_queryset(queryset)
+
+    @action(detail=False)
+    def own(self, request):
+        queryset = Recipe.objects.filter(author=self.chef)
         return self._list_queryset(queryset)
 
     def _list_queryset(self, queryset):
@@ -61,29 +111,18 @@ class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-
-
-class RecipeListCreateView(generics.ListCreateAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = RecipeSerializer
-    queryset = Recipe.objects.all()
-
-
-class RecipeView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = RecipeSerializer
-    queryset = Recipe.objects.all()
+    def perform_create(self, serializer):
+        serializer.save(author=self.chef)
 
 
 class LikeView(ChefMixin,
+               RecipeMixin,
                mixins.RetrieveModelMixin,
                mixins.CreateModelMixin,
                mixins.DestroyModelMixin,
                generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = LikeSerializer
-    lookup_url_kwarg = 'recipe'
-
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
@@ -112,30 +151,9 @@ class LikeView(ChefMixin,
         self.check_object_permissions(self.request, obj)
         return obj
 
-    @property
-    def recipe(self) -> Recipe:
-        return get_object_or_404(Recipe, pk=self.kwargs[self.lookup_url_kwarg])
-
     def perform_create(self, serializer):
         serializer.save(recipe=self.recipe, chef=self.chef)
 
     def perform_destroy(self, instance):
         if not instance._state.adding:
             instance.delete()
-
-
-class LikedRecipeListView(ChefMixin, generics.ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = RecipeSerializer
-
-    def get_queryset(self):
-        return self.chef.likes.all()
-
-
-class InCategoryRecipeListView(ChefMixin, generics.ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = RecipeSerializer
-
-    def get_queryset(self):
-        return Recipe.objects.filter(category__pk=self.kwargs['category'])
-
