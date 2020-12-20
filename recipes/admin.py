@@ -1,10 +1,14 @@
 from django.contrib import admin, auth
-from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like, Category
+from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like, Category, CookingTime
 from django.utils.translation import gettext_lazy as _
 
 
 class NutritionInline(admin.TabularInline):
     model = Nutrition
+
+
+class CookingTimeInline(admin.TabularInline):
+    model = CookingTime
 
 
 class ProductInline(admin.TabularInline):
@@ -16,6 +20,7 @@ class RecipeImageInline(admin.TabularInline):
     model = RecipeImage
     extra = 0
 
+
 class StepInline(admin.StackedInline):
     model = Step
     extra = 0
@@ -26,7 +31,7 @@ class RecipeAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'publication_time')
     fieldsets = (
         (_('general info'), {'fields': ('title', 'author', 'publication_time', 'category')}),
-        (_('abstract'), {'fields': ('cooking_time', 'servings')}),
+        (_('abstract'), {'fields': ('servings', )}),
         (_('Payload'), {
             'fields': ('description', ),
         }),
@@ -37,8 +42,8 @@ class RecipeAdmin(admin.ModelAdmin):
         RecipeImageInline,
         StepInline,
     ]
-    list_display = ('title', 'author', 'publication_time')
-    search_fields = ('title', 'author', 'publication_time')
+    list_display = ('id', 'title', 'author', 'publication_time')
+    search_fields = ('id', 'title', 'author', 'publication_time')
 
 
 class LikeInline(admin.TabularInline):
