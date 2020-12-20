@@ -1,4 +1,4 @@
-from rest_framework import generics, viewsets, mixins
+from rest_framework import generics, viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from recipes.models import Recipe, Chef, Like, Category, RecipeImage, Step, Product
 from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer, \
-    RecipeImageSerializer, StepSerializer, ProductSerializer
+    RecipeImageSerializer, StepSerializer, ProductSerializer, MoveStepSerializer
 
 
 class ChefMixin:
@@ -24,6 +24,10 @@ class RecipeMixin:
     def recipe(self):
         recipe = get_object_or_404(Recipe, pk=self.kwargs['recipe'])
         return recipe
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        return context | {'recipe': self.recipe}
 
 
 class ChefViewSet(viewsets.ModelViewSet):
@@ -73,6 +77,32 @@ class StepViewSet(RecipeComponentViewSet):
     permission_classes = (IsAuthenticated, )
     serializer_class = StepSerializer
     model = Step
+
+    def perform_destroy(self, instance):
+        Step.objects.move(instance)
+        instance.delete()
+
+
+class MoveStepView(RecipeMixin, generics.GenericAPIView):
+    serializer_class = MoveStepSerializer
+
+    def get_queryset(self):
+        return Step.objects.filter(recipe=self.recipe)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Move a single Step to a new position
+        """
+        obj = self.get_object()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_order = serializer.validated_data.get('order')
+
+        Step.objects.move(obj, new_order)
+
+        return Response({'success': True, 'order': new_order})
 
 
 class ProductViewSet(RecipeComponentViewSet):

@@ -121,6 +121,18 @@ class StepSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ['order']
 
 
+class MoveStepSerializer(serializers.Serializer):
+    order = serializers.IntegerField()
+
+    def validate_order(self, value):
+        if value < 0:
+            raise ValidationError('Order must be positve number')
+
+        if value > Step.objects.current_order(self.context['recipe']):
+            raise ValidationError('Order must be positve number')
+
+        return value
+
 class LikeSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         read_only=True,

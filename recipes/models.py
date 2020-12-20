@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator
-from django.db import models
-from django.db.models import F
+from django.db import models, transaction
+from django.db.models import F, Max
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -84,6 +84,74 @@ class RecipeImage(models.Model):
     )
 
 
+class StepManager(models.Manager):
+    """
+    Manager to encapsulate bits of business logic
+    """
+
+    def move(self, obj, new_order=None):
+        """
+        Move an object to a new order position
+        """
+        qs = self.get_queryset()
+
+        with transaction.atomic():
+            current_order = self.current_order(obj.recipe)
+
+            if new_order is None:
+                new_order = current_order
+
+            if obj.order > int(new_order):
+                qs.filter(
+                    recipe=obj.recipe,
+                    order__lt=obj.order,
+                    order__gte=new_order,
+                ).exclude(
+                    pk=obj.pk
+                ).update(
+                    order=F('order') + 1,
+                )
+            else:
+                qs.filter(
+                    recipe=obj.recipe,
+                    order__lte=new_order,
+                    order__gt=obj.order,
+                ).exclude(
+                    pk=obj.pk,
+                ).update(
+                    order=F('order') - 1,
+                )
+
+            obj.order = new_order
+            obj.save()
+
+    def create(self, **kwargs):
+        instance = self.model(**kwargs)
+
+        with transaction.atomic():
+            # Get our current max order number
+            current_order = self.current_order(instance.recipe)
+
+            value = current_order + 1
+            instance.order = value
+            instance.save()
+
+            return instance
+
+    def current_order(self, recipe):
+        results = self.filter(
+            recipe=recipe
+        ).aggregate(
+            Max('order')
+        )
+
+        # Increment and use it for our new object
+        current_order = results['order__max']
+        if current_order is None:
+            current_order = 0
+
+        return current_order
+
 
 class Step(models.Model):
     id = models.AutoField(primary_key=True)
@@ -95,6 +163,7 @@ class Step(models.Model):
         upload_to=step_upload_to,
         blank=True
     )
+    objects = StepManager()
 
     class Meta:
         ordering = ['order']
