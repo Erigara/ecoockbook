@@ -4,6 +4,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 
+from recipes.filters import RecipeFilterBackend
 from recipes.models import Recipe, Chef, Like, Category, RecipeImage, Step, Product
 from recipes.permissions import IsRecipeComponentAuthor, IsRecipeComponentPublished, IsRecipePublished, IsRecipeAuthor
 from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer, \
@@ -120,6 +121,7 @@ class ProductViewSet(RecipeComponentViewSet):
 
 
 class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
+    filter_backends = [RecipeFilterBackend]
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
 
