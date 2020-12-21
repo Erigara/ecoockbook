@@ -148,7 +148,7 @@ ELASTICSEARCH_DSL={
         'hosts': 'elasticsearch:9200'
     },
 }
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl_celery.CelerySignalProcessor'
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'ecookbook.django_elasticsearch_dsl_celery.CelerySignalProcessor'
 
 # Celery
 CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@rabbit:5672'
