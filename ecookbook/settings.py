@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'django_elasticsearch_dsl',
     'users',
     'recipes',
 ]
@@ -140,3 +141,18 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ]
 }
+
+# Elasticsearch
+ELASTICSEARCH_DSL={
+    'default': {
+        'hosts': 'elasticsearch:9200'
+    },
+}
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl_celery.CelerySignalProcessor'
+
+# Celery
+CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@rabbit:5672'
+CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
