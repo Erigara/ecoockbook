@@ -1,6 +1,5 @@
 from rest_framework import permissions
 
-
 class IsRecipeAuthor(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.author.user == request.user
@@ -12,6 +11,9 @@ class IsRecipeComponentAuthor(permissions.BasePermission):
 
 
 class IsRecipePublished(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return False
+
     def has_object_permission(self, request, view, obj):
         return obj.published
 
