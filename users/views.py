@@ -13,20 +13,21 @@ from users.serializers import RegistrationSerializer, LoginSerializer, UserSeria
 
 class UserViewSet(mixins.ListModelMixin,
                   mixins.RetrieveModelMixin,
+                  mixins.UpdateModelMixin,
                   viewsets.GenericViewSet):
-    permission_classes = (IsAuthenticated, IsItselfOrReadOnly)
+    permission_classes = [IsAuthenticated, IsItselfOrReadOnly]
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
 
 class RegistrationView(CreateAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = [AllowAny]
     serializer_class = RegistrationSerializer
 
 
 class LoginView(GenericAPIView):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (AllowAny,)
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [AllowAny]
     serializer_class = LoginSerializer
 
     def post(self, request):
@@ -40,8 +41,8 @@ class LoginView(GenericAPIView):
 
 
 class LogoutView(APIView):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         response = Response()
