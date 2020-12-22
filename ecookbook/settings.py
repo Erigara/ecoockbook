@@ -25,7 +25,11 @@ SECRET_KEY = '7$336ae#o#7$xab70l_hx83%_+z6ph(1-b47e@f3zpzsbu5lh6'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'web',
+    'localhost',
+    '0.0.0.0'
+]
 
 
 # Application definition
@@ -139,7 +143,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
 }
 
 # Elasticsearch

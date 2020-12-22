@@ -198,6 +198,11 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         source='author.user',
         read_only=True
     )
+    category_slug = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=Category.objects.all(),
+        write_only=True
+    )
     nutrition = NutritionSerializer()
     cooking_time = CookingTimeSerializer()
     products = RelatedHyperlink(
@@ -219,7 +224,6 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         source='*'
     )
 
-
     def validate_published(self, value):
         instance = self.instance
         if self.instance:
@@ -229,6 +233,8 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         return value
 
     def validate(self, attrs):
+        category_slug = attrs.pop('category_slug')
+        attrs |= {'category': category_slug}
         published = attrs.get('published', False)
         if published:
             instance = self.instance
@@ -240,8 +246,8 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
                 raise ValidationError({'images': _('Add at least 1 image of the dish.')})
             if instance.products.count() < 1:
                 raise ValidationError({'products': _('Add at least 1 product.')})
-            if not instance.category:
-                raise ValidationError({'category': _('Choose availbale category')})
+            if not instance.category and not 'category' in attrs:
+                raise ValidationError({'category': _('Choose available category')})
         return attrs
 
     def create(self, validated_data):
@@ -301,6 +307,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             'title',
             'published',
             'category',
+            'category_slug',
             'author',
             'publication_time',
             'servings',
@@ -311,4 +318,4 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             'images',
             'steps',
         ]
-        read_only_fields = ['url', 'publication_time', 'author']
+        read_only_fields = ['url', 'publication_time', 'author', 'category']
