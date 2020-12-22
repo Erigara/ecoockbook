@@ -18,11 +18,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ['url', 'id', 'username', 'avatar', 'first_name', 'last_name', 'email', 'phone_number', 'about']
-        read_only_fields = ['url', 'id', 'username']
+        fields = ['url', 'username', 'avatar', 'first_name', 'last_name', 'email', 'about']
+        read_only_fields = ['url', 'username']
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class RegistrationSerializer(serializers.HyperlinkedModelSerializer):
     password = serializers.CharField(
         style={
             'input_type': 'password',
@@ -48,18 +48,19 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(username=validated_data.pop('username'),
-                                        email=validated_data.pop('email'),
-                                        password=validated_data.pop('password'),
-                                        phone_number=validated_data.pop('phone_number'))
+        user = User.objects.create_user(
+            username=validated_data.pop('username'),
+            email=validated_data.pop('email'),
+            password=validated_data.pop('password'),
+        )
         user.save()
 
         return user
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'password', 'password_confirmed']
-        read_only_fields = ['id']
+        fields = ['url', 'username', 'email', 'password', 'password_confirmed']
+        read_only_fields = ['url']
 
 
 class LoginSerializer(serializers.Serializer):
