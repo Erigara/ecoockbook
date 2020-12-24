@@ -29,7 +29,6 @@ class RecipeDocument(Document):
         'preparation_hours': fields.ShortField(),
         'preparation_minutes': fields.ShortField()
     })
-    likes_amount = fields.IntegerField()
     author = fields.TextField()
 
     def prepare_author(self, instance):
