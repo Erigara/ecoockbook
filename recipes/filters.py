@@ -36,8 +36,8 @@ class RecipeFilterBackend(filters.BaseFilterBackend):
                 query=Q("match", products__name=search)
             )
             query = RecipeDocument.search().query(query_in_reipe | query_in_steps | query_in_products)
-            queryset = query.to_queryset()
-
+            queryset_hits = query.to_queryset()
+            queryset = queryset & queryset_hits
         return queryset
 
     def to_html(self, request, queryset, view):

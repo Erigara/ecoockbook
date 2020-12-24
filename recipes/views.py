@@ -1,5 +1,8 @@
+from django.db.models import Count
+from django.db.models.functions import Trunc
 from rest_framework import generics, viewsets, mixins
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
@@ -45,7 +48,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     @action(detail=True)
     def recipes(self, request, pk=None):
-        queryset = self.get_object().recipes
+        queryset = self.get_object().recipes.all()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = RecipeSerializer(page, many=True, context=self.get_serializer_context())
@@ -121,9 +124,9 @@ class ProductViewSet(RecipeComponentViewSet):
 
 
 class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
-    filter_backends = [RecipeFilterBackend]
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
+    filter_backends = [RecipeFilterBackend]
 
     def get_permissions(self):
         if self.action == 'list':
@@ -152,10 +155,19 @@ class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
 
     @action(detail=False)
     def own(self, request):
-        queryset = Recipe.objects.filter(author=self.chef)
+        queryset = self.get_queryset().filter(author=self.chef)
+        return self._list_queryset(queryset)
+    
+    @action(detail=False)
+    def feed(self, request):
+        queryset = (self.get_queryset()
+                    .filter(published=True)
+                    .annotate(likes_count=Count('likes'), publication_date=Trunc('publication_time', 'day'))
+                    .order_by('-publication_date', '-likes_count'))
         return self._list_queryset(queryset)
 
     def _list_queryset(self, queryset):
+        queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
