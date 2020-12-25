@@ -177,22 +177,19 @@ class Product(models.Model):
             ('GAL', _('gallon')),
             ('ML', _('milliliter')),
             ('L', _('liter'))
-        )
-         ),
+        )),
         (_('Mass and Weight'), (
             ('LB', _('pound')),
             ('OZ', _('ounce')),
             ('G', _('gram')),
             ('KG', _('kilogram'))
-        )
-         ),
+        )),
         (_('Length'), (
             ('MM', _('millimeter')),
             ('CM', _('centimeter')),
             ('M', _('meter')),
             ('IN', _('inch'))
-        )
-         ),
+        )),
         ('PI', _('piece')),
     ]
     id = models.AutoField(primary_key=True)
@@ -241,3 +238,14 @@ class Like(models.Model):
 
     class Meta:
         unique_together = ['chef', 'recipe']
+
+
+class Comment(models.Model):
+    id = models.AutoField(primary_key=True)
+    chef = models.ForeignKey(Chef, related_name='comments', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='comments', on_delete=models.CASCADE)
+    creation_time = models.DateTimeField(_('creation time'), default=timezone.now)
+    text = models.TextField(_('text'))
+
+    class Meta:
+        ordering = ['-creation_time']

@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from ecookbook.utils import RelatedHyperlink
-from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like, Category, CookingTime
+from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like, Category, CookingTime, Comment
 
 
 class ChefSerializer(serializers.HyperlinkedModelSerializer):
@@ -105,20 +105,10 @@ class StepSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True
     )
 
-    def create(self, validated_data):
-        recipe = validated_data.get('recipe')
-
-        # TODO Handle order
-        instance = super().create(validated_data)
-        return instance
-
     def update(self, instance: Step, validated_data):
-        recipe = validated_data.get('recipe')
         # delete previous image before uploading new one
         if 'image' in validated_data:
             instance.image.delete(save=False)
-
-        # TODO Handle order
 
         instance = super().update(instance, validated_data)
         return instance
@@ -140,6 +130,7 @@ class MoveStepSerializer(serializers.Serializer):
             raise ValidationError(_('Trying to move out of bounds'))
 
         return value
+
 
 class LikeSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
@@ -186,6 +177,25 @@ class LikeSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ['url', 'creation_time']
 
 
+class CommentSerializer(serializers.HyperlinkedModelSerializer):
+    url = RelatedHyperlink(
+        view_name='recipe-comment-detail',
+        lookup_fields=['recipe.pk', 'pk'],
+        lookup_url_kwargs=['recipe', 'pk'],
+        source='*',
+        read_only=True,
+    )
+    user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        source='chef.user',
+        read_only=True
+    )
+
+    class Meta:
+        model = Comment
+        fields = ['url', 'recipe', 'user', 'creation_time', 'text']
+
+
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     likes = serializers.HyperlinkedRelatedField(
         view_name='recipe-like',
@@ -223,6 +233,12 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True,
         source='*'
     )
+    comments = RelatedHyperlink(
+        view_name='recipe-comment-list',
+        lookup_url_kwarg='recipe',
+        read_only=True,
+        source='*'
+    )
 
     def validate_published(self, value):
         instance = self.instance
@@ -246,7 +262,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
                 raise ValidationError({'images': _('Add at least 1 image of the dish.')})
             if instance.products.count() < 1:
                 raise ValidationError({'products': _('Add at least 1 product.')})
-            if not instance.category and not 'category' in attrs:
+            if not instance.category and 'category' not in attrs:
                 raise ValidationError({'category': _('Choose available category')})
         return attrs
 
@@ -317,5 +333,6 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             'products',
             'images',
             'steps',
+            'comments',
         ]
         read_only_fields = ['url', 'publication_time', 'author', 'category']

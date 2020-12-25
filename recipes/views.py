@@ -8,10 +8,10 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 
 from recipes.filters import RecipeFilterBackend
-from recipes.models import Recipe, Chef, Like, Category, RecipeImage, Step, Product
+from recipes.models import Recipe, Chef, Like, Category, RecipeImage, Step, Product, Comment
 from recipes.permissions import IsRecipeComponentAuthor, IsRecipeComponentPublished, IsRecipePublished, IsRecipeAuthor
 from recipes.serializers import RecipeSerializer, ChefSerializer, LikeSerializer, CategorySerializer, \
-    RecipeImageSerializer, StepSerializer, ProductSerializer, MoveStepSerializer
+    RecipeImageSerializer, StepSerializer, ProductSerializer, MoveStepSerializer, CommentSerializer
 
 
 class ChefMixin:
@@ -36,7 +36,7 @@ class RecipeMixin:
 
 
 class ChefViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated]
     serializer_class = ChefSerializer
     queryset = Chef.objects.all()
 
@@ -74,7 +74,7 @@ class RecipeComponentViewSet(RecipeMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.model is None:
-            raise NotImplemented('Subclass of RecipeViewSet must override model')
+            raise NotImplementedError('Subclass of RecipeViewSet must override model')
         return self.model.objects.filter(recipe=self.recipe)
 
     def perform_create(self, serializer):
@@ -123,17 +123,35 @@ class ProductViewSet(RecipeComponentViewSet):
     model = Product
 
 
+class CommentViewSet(ChefMixin, RecipeComponentViewSet):
+    serializer_class = CommentSerializer
+    model = Comment
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsRecipeComponentPublished]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAuthenticated, IsRecipeComponentPublished]
+        else:
+            permission_classes = []
+
+        return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        serializer.save(recipe=self.recipe, chef=self.chef)
+
+
 class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
     filter_backends = [RecipeFilterBackend]
 
     def get_permissions(self):
-        if self.action == 'list':
+        if self.action in ['list', 'feed']:
             permission_classes = [AllowAny]
         elif self.action in ['favorites', 'own', 'template']:
             permission_classes = [IsAuthenticated]
-        elif self.action == 'retrieve':
+        elif self.action in ['retrieve']:
             permission_classes = [IsRecipePublished | (IsAuthenticated & IsRecipeAuthor)]
         elif self.action in ['create', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsAuthenticated, IsRecipeAuthor, ~ IsRecipePublished]
@@ -157,7 +175,7 @@ class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
     def own(self, request):
         queryset = self.get_queryset().filter(author=self.chef)
         return self._list_queryset(queryset)
-    
+
     @action(detail=False)
     def feed(self, request):
         queryset = (self.get_queryset()

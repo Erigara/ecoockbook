@@ -6,7 +6,7 @@ from celery import shared_task
 
 
 @shared_task
-def handle_save(pk,  app_label, model_name):
+def handle_save(pk, app_label, model_name):
     sender = apps.get_model(app_label, model_name)
     instance = sender.objects.get(pk=pk)
     registry.update(instance)
@@ -14,14 +14,14 @@ def handle_save(pk,  app_label, model_name):
 
 
 @shared_task
-def handle_pre_delete(pk,  app_label, model_name):
+def handle_pre_delete(pk, app_label, model_name):
     sender = apps.get_model(app_label, model_name)
     instance = sender.objects.get(pk=pk)
     registry.delete_related(instance)
 
 
 @shared_task
-def handle_delete(pk,  app_label, model_name):
+def handle_delete(pk, app_label, model_name):
     sender = apps.get_model(app_label, model_name)
     instance = sender.objects.get(pk=pk)
     registry.delete(instance, raise_on_error=False)
