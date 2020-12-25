@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_elasticsearch_dsl',
     'users',
     'recipes',
+    'frontend'
 ]
 
 MIDDLEWARE = [

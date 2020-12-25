@@ -20,9 +20,10 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),
-    path('cookbook/', include('recipes.urls')),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('api/users/', include('users.urls')),
+    path('api/cookbook/', include('recipes.urls')),
+    path('api/auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('', include('frontend.urls')),
 ]
 
 if settings.DEBUG:
