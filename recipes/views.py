@@ -36,7 +36,7 @@ class RecipeMixin:
 
 
 class ChefViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated]
     serializer_class = ChefSerializer
     queryset = Chef.objects.all()
 
@@ -74,7 +74,7 @@ class RecipeComponentViewSet(RecipeMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.model is None:
-            raise NotImplemented('Subclass of RecipeViewSet must override model')
+            raise NotImplementedError('Subclass of RecipeViewSet must override model')
         return self.model.objects.filter(recipe=self.recipe)
 
     def perform_create(self, serializer):
@@ -157,7 +157,7 @@ class RecipeViewSet(ChefMixin, viewsets.ModelViewSet):
     def own(self, request):
         queryset = self.get_queryset().filter(author=self.chef)
         return self._list_queryset(queryset)
-    
+
     @action(detail=False)
     def feed(self, request):
         queryset = (self.get_queryset()

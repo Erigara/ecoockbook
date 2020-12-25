@@ -177,22 +177,19 @@ class Product(models.Model):
             ('GAL', _('gallon')),
             ('ML', _('milliliter')),
             ('L', _('liter'))
-        )
-         ),
+        )),
         (_('Mass and Weight'), (
             ('LB', _('pound')),
             ('OZ', _('ounce')),
             ('G', _('gram')),
             ('KG', _('kilogram'))
-        )
-         ),
+        )),
         (_('Length'), (
             ('MM', _('millimeter')),
             ('CM', _('centimeter')),
             ('M', _('meter')),
             ('IN', _('inch'))
-        )
-         ),
+        )),
         ('PI', _('piece')),
     ]
     id = models.AutoField(primary_key=True)

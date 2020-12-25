@@ -105,20 +105,10 @@ class StepSerializer(serializers.HyperlinkedModelSerializer):
         read_only=True
     )
 
-    def create(self, validated_data):
-        recipe = validated_data.get('recipe')
-
-        # TODO Handle order
-        instance = super().create(validated_data)
-        return instance
-
     def update(self, instance: Step, validated_data):
-        recipe = validated_data.get('recipe')
         # delete previous image before uploading new one
         if 'image' in validated_data:
             instance.image.delete(save=False)
-
-        # TODO Handle order
 
         instance = super().update(instance, validated_data)
         return instance
@@ -140,6 +130,7 @@ class MoveStepSerializer(serializers.Serializer):
             raise ValidationError(_('Trying to move out of bounds'))
 
         return value
+
 
 class LikeSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
@@ -246,7 +237,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
                 raise ValidationError({'images': _('Add at least 1 image of the dish.')})
             if instance.products.count() < 1:
                 raise ValidationError({'products': _('Add at least 1 product.')})
-            if not instance.category and not 'category' in attrs:
+            if not instance.category and 'category' not in attrs:
                 raise ValidationError({'category': _('Choose available category')})
         return attrs
 
