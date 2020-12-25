@@ -1,6 +1,6 @@
 import uuid
 from pathlib import Path
-from functools  import partial
+from functools import partial
 
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -52,4 +52,3 @@ class RelatedHyperlink(serializers.HyperlinkedRelatedField):
             url_kwargs |= {lookup_url_kwarg: nested_gettattr(obj, lookup_field)}
 
         return reverse(view_name, kwargs=url_kwargs, request=request, format=format)
-
