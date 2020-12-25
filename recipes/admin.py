@@ -1,5 +1,5 @@
 from django.contrib import admin, auth
-from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like, Category, CookingTime
+from recipes.models import Recipe, Nutrition, Product, Step, RecipeImage, Chef, Like, Category, CookingTime, Comment
 from django.utils.translation import gettext_lazy as _
 
 
@@ -25,6 +25,10 @@ class StepInline(admin.StackedInline):
     model = Step
     extra = 0
 
+class CommentInline(admin.StackedInline):
+    model = Comment
+    extra = 0
+
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
@@ -41,6 +45,7 @@ class RecipeAdmin(admin.ModelAdmin):
         ProductInline,
         RecipeImageInline,
         StepInline,
+        CommentInline,
     ]
     list_display = ('id', 'title', 'author', 'publication_time')
     search_fields = ('id', 'title', 'author', 'publication_time')

@@ -5,7 +5,7 @@ from rest_framework.reverse import reverse
 from rest_framework.routers import DefaultRouter
 
 from recipes.views import ChefViewSet, LikeView, CategoryViewSet, \
-    RecipeViewSet, RecipeImageViewSet, StepViewSet, ProductViewSet, MoveStepView
+    RecipeViewSet, RecipeImageViewSet, StepViewSet, ProductViewSet, MoveStepView, CommentViewSet
 
 router = DefaultRouter()
 router.register(r'chefs', ChefViewSet, basename='chef')
@@ -14,7 +14,7 @@ router.register(r'recipes', RecipeViewSet, basename='recipe')
 router.register(r'recipes/(?P<recipe>[^/.]+)/images', RecipeImageViewSet, basename='recipe-image')
 router.register(r'recipes/(?P<recipe>[^/.]+)/steps', StepViewSet, basename='recipe-step')
 router.register(r'recipes/(?P<recipe>[^/.]+)/products', ProductViewSet, basename='recipe-product')
-
+router.register(r'recipes/(?P<recipe>[^/.]+)/comments', CommentViewSet, basename='recipe-comment')
 
 urlpatterns = [
     path('', include(router.urls)),

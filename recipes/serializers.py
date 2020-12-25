@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from ecookbook.utils import RelatedHyperlink
-from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like, Category, CookingTime
+from recipes.models import Recipe, Nutrition, Step, RecipeImage, Product, Chef, Like, Category, CookingTime, Comment
 
 
 class ChefSerializer(serializers.HyperlinkedModelSerializer):
@@ -177,6 +177,25 @@ class LikeSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ['url', 'creation_time']
 
 
+class CommentSerializer(serializers.HyperlinkedModelSerializer):
+    url = RelatedHyperlink(
+        view_name='recipe-comment-detail',
+        lookup_fields=['recipe.pk', 'pk'],
+        lookup_url_kwargs=['recipe', 'pk'],
+        source='*',
+        read_only=True,
+    )
+    user = serializers.HyperlinkedRelatedField(
+        view_name='user-detail',
+        source='chef.user',
+        read_only=True
+    )
+
+    class Meta:
+        model = Comment
+        fields = ['url', 'recipe', 'user', 'creation_time', 'text']
+
+
 class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     likes = serializers.HyperlinkedRelatedField(
         view_name='recipe-like',
@@ -210,6 +229,12 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
     )
     steps = RelatedHyperlink(
         view_name='recipe-step-list',
+        lookup_url_kwarg='recipe',
+        read_only=True,
+        source='*'
+    )
+    comments = RelatedHyperlink(
+        view_name='recipe-comment-list',
         lookup_url_kwarg='recipe',
         read_only=True,
         source='*'
@@ -308,5 +333,6 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             'products',
             'images',
             'steps',
+            'comments',
         ]
         read_only_fields = ['url', 'publication_time', 'author', 'category']
