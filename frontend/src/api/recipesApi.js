@@ -1,4 +1,4 @@
-const axios = require('axios');
+import {axios} from './api';
 
 export const feed = () => {
     return axios.get("api/cookbook/recipes/feed/");

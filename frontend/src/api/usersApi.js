@@ -1,7 +1,11 @@
-const axios = require('axios');
+import {axios} from './api';
 
 export const login = (credentials) => {
     return axios.post("api/users/login", credentials);
+}
+
+export const logout = () => {
+    return axios.post("api/users/logout", {});
 }
 
 export const registration = (credentials) => {

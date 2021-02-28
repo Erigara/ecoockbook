@@ -15,7 +15,14 @@
     "webpack": "^5.11.0",
     "webpack-cli": "^4.2.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "antd": "^4.13.0",
+    "axios": "^0.21.1",
+    "css-loader": "^5.1.0",
+    "js-cookie": "^2.2.1",
+    "react-router-dom": "^5.2.0",
+    "style-loader": "^2.0.0"
+  },
   "description": "",
   "scripts": {
     "dev": "webpack --mode development",
