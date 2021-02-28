@@ -3,11 +3,9 @@ import {
     BrowserRouter as Router,
     Switch,
     Route,
-    Link
 } from "react-router-dom";
 import {render} from "react-dom";
-import {Layout, Menu, Typography} from 'antd';
-import {UserOutlined, LogoutOutlined} from '@ant-design/icons';
+import {Layout, Typography} from 'antd';
 
 import './App.css';
 import {LoginRegisterModal} from "./components/Login";
@@ -18,7 +16,6 @@ import {getUser} from "./api/usersApi";
 
 const {Header, Content, Sider, Footer} = Layout;
 const {Title} = Typography;
-const {SubMenu} = Menu;
 
 
 export default function App() {
@@ -27,11 +24,15 @@ export default function App() {
     // try to get current user
     useEffect(() => {
        getUser().then(res => {
-           console.log(res);
-           if (res.status == 200) {
+           if (res.status === 200) {
                setUser(res.data);
            }
+       }).catch(err => {
+           if (err.response && err.response.status !== 403) {
+               console.log(err.response);
+           }
        })
+
     }, []);
 
 
