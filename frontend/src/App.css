@@ -1,0 +1,33 @@
+@import '../node_modules/antd/dist/antd.css';
+
+
+.site-layout-content {
+  min-height: 280px;
+  padding: 24px;
+  background: #fff;
+}
+
+.site-layout-background {
+  background: #fff;
+}
+
+.logo {
+  float: left;
+  margin: 8px 24px 16px 0;
+}
+
+.header-inline {
+  float: right;
+}
+
+.login-form {
+  max-width: 300px;
+}
+
+.login-form-forgot {
+  float: right;
+}
+
+.login-form-button {
+  width: 100%;
+}
