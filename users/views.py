@@ -1,6 +1,7 @@
 from django.contrib.auth import logout, login
 from rest_framework import mixins, viewsets
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -18,6 +19,12 @@ class UserViewSet(mixins.ListModelMixin,
     permission_classes = [IsAuthenticated, IsItselfOrReadOnly]
     serializer_class = UserSerializer
     queryset = User.objects.all()
+
+    @action(detail=False)
+    def self(self, request):
+        instance =  self.request.user
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class RegistrationView(CreateAPIView):
