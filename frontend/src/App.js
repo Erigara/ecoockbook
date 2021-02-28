@@ -13,6 +13,7 @@ import './App.css';
 import {LoginRegisterModal} from "./components/Login";
 import MainMenu from "./components/MainMenu";
 import ProfileMenu from "./components/ProfileMenu";
+import {getUser} from "./api/usersApi";
 
 
 const {Header, Content, Sider, Footer} = Layout;
@@ -25,16 +26,12 @@ export default function App() {
 
     // try to get current user
     useEffect(() => {
-        // api request to /users/self
-        setUser({
-            url: "http://localhost:8000/api/users/2/",
-            username: "lbecker",
-            avatar: "http://localhost:8000/media/users/avatars/lbecker-a10edd9e-dbeb-4cf1-a1f0-84f2626cb82b.jpg",
-            first_name: "Elaine",
-            last_name: "Perry",
-            email: "kaitlyn60@yahoo.com",
-            about: "Merchandiser, retail"
-        })
+       getUser().then(res => {
+           console.log(res);
+           if (res.status == 200) {
+               setUser(res.data);
+           }
+       })
     }, []);
 
 

@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {Form, Input, Button, Modal, Tabs, Space} from 'antd';
 import {UserOutlined, LockOutlined, MailOutlined} from '@ant-design/icons';
 import {login} from "../api/usersApi";
+import {setFormErrors} from "../utils";
 
 const {TabPane} = Tabs;
 
@@ -74,43 +75,71 @@ export function LoginRegisterModal(props = {}) {
 }
 
 function LoginForm(props = {}) {
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
     const {enterRegistration, setUser} = props;
 
+    const error = () => {
+        Modal.error({
+            title: 'Authentication Error',
+            content: 'Something went wrong with authentication...',
+        });
+    }
+
     const onFinish = (values) => {
+        setLoading(true);
         login(values).then(res => {
-            console.log(res)
+            if (res.status == 200) {
+                setUser(res.data);
+            }
+        }).catch(err => {
+            if (err && err.response && err.response.data) {
+                setFormErrors(err.response.data, form.getFieldsValue, form.setFields);
+            } else {
+                error();
+            }
+        }).finally(() => {
+            setLoading(false);
         })
     }
 
     return (
-        <Form
-            name="login"
-            className="login-form"
-            onFinish={onFinish}
-        >
-            <Form.Item
-                name="username"
-                rules={[{required: true, message: 'Please input your Username!'}]}
+        <>
+            <Form
+                form={form}
+                name="login"
+                className="login-form"
+                onFinish={onFinish}
             >
-                <Input prefix={<UserOutlined className="site-form-item-icon"/>} placeholder="Username"/>
-            </Form.Item>
-            <Form.Item
-                name="password"
-                rules={[{required: true, message: 'Please input your Password!'}]}
-            >
-                <Input
-                    prefix={<LockOutlined className="site-form-item-icon"/>}
-                    type="password"
-                    placeholder="Password"
-                />
-            </Form.Item>
-            <Form.Item>
-                <Button type="primary" htmlType="submit" className="login-form-button">
-                    Log in
-                </Button>
-                Or <a onClick={enterRegistration}>register now!</a>
-            </Form.Item>
-        </Form>
+                <Form.Item
+                    name="username"
+                    rules={[{required: true, message: 'Please input your Username!'}]}
+                >
+                    <Input prefix={<UserOutlined className="site-form-item-icon"/>} placeholder="Username"/>
+                </Form.Item>
+                <Form.Item
+                    name="password"
+                    rules={[{required: true, message: 'Please input your Password!'}]}
+                >
+                    <Input
+                        prefix={<LockOutlined className="site-form-item-icon"/>}
+                        type="password"
+                        placeholder="Password"
+                    />
+                </Form.Item>
+                <Form.Item>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        className="login-form-button"
+                        loading={loading}
+                    >
+                        Log in
+                    </Button>
+                    Or <a onClick={enterRegistration}>register now!</a>
+                </Form.Item>
+            </Form>
+        </>
     );
 }
 

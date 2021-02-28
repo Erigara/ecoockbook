@@ -9,11 +9,11 @@ export const registration = (credentials) => {
 }
 
 export const getUsers = () => {
-    return axios.get('api/users');
+    return axios.get('api/users/');
 }
 
 export const getUser = (id = 'self') => {
-    return axios.get(`api/users/${id}`);
+    return axios.get(`api/users/${id}/`);
 }
 
 export const updateUser = (user, data) => {
