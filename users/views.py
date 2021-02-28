@@ -42,7 +42,7 @@ class LoginView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data.get('user')
         login(request, user)
-        user_serializer = UserSerializer(self.request.user)
+        user_serializer = UserSerializer(self.request.user, context={'request': request})
         response = Response(user_serializer.data)
         return response
 
