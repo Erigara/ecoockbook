@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {Avatar, Menu} from 'antd';
 import {UserOutlined, LogoutOutlined} from '@ant-design/icons';
+import {logout} from "../api/usersApi";
 
 const {SubMenu} = Menu;
 
@@ -14,7 +15,13 @@ export default function ProfileMenu(props = {}) {
                 //
                 break;
             case "logout":
-                setUser(null);
+                logout().then(res => {
+                    if (res.status === 200) {
+                        setUser(null);
+                    }
+                }).catch(err => {
+                    console.log(err);
+                });
                 break;
         }
     }
