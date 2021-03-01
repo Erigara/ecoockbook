@@ -11,6 +11,7 @@ import './App.css';
 import {LoginRegisterModal} from "./components/Login";
 import MainMenu from "./components/MainMenu";
 import ProfileMenu from "./components/ProfileMenu";
+import Profile from "./pages/Profile";
 import {getUser} from "./api/usersApi";
 
 
@@ -23,18 +24,17 @@ export default function App() {
 
     // try to get current user
     useEffect(() => {
-       getUser().then(res => {
-           if (res.status === 200) {
-               setUser(res.data);
-           }
-       }).catch(err => {
-           if (err.response && err.response.status !== 403) {
-               console.log(err.response);
-           }
-       })
+        getUser().then(res => {
+            if (res.status === 200) {
+                setUser(res.data);
+            }
+        }).catch(err => {
+            if (err.response && err.response.status !== 403) {
+                console.log(err.response);
+            }
+        })
 
     }, []);
-
 
     return (
         <>
@@ -61,6 +61,9 @@ export default function App() {
                                     </Route>
                                     <Route path="/user">
                                         <User/>
+                                    </Route>
+                                    <Route path="/profile">
+                                        <Profile user={user} setUser={setUser}/>
                                     </Route>
                                     <Route path="/own">
                                         <Recipes kind={"own"}/>
