@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {Form, Input, Button, Modal, Tabs, Space} from 'antd';
 import {UserOutlined, LockOutlined, MailOutlined} from '@ant-design/icons';
-import {login} from "../api/usersApi";
+import {login, registration} from "../api/usersApi";
 import {setFormErrors} from "../utils";
 
 const {TabPane} = Tabs;
@@ -144,10 +144,37 @@ function LoginForm(props = {}) {
 }
 
 function RegistrationForm(props = {}) {
-    const {onFinish, enterLogin} = props;
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+    const {enterLogin, setUser} = props;
+
+        const error = () => {
+        Modal.error({
+            title: 'Registration Error',
+            content: 'Something went wrong during registration...',
+        });
+    }
+
+    const onFinish = (values) => {
+        setLoading(true);
+        registration(values).then(res => {
+            if (res.status == 201) {
+                setUser(res.data);
+            }
+        }).catch(err => {
+            if (err && err.response && err.response.data) {
+                setFormErrors(err.response.data, form.getFieldsValue, form.setFields);
+            } else {
+                error();
+            }
+        }).finally(() => {
+            setLoading(false);
+        })
+    }
 
     return (
         <Form
+            form={form}
             name="registration"
             className="login-form"
             onFinish={onFinish}
@@ -187,7 +214,7 @@ function RegistrationForm(props = {}) {
                 />
             </Form.Item>
             <Form.Item
-                name="confirm"
+                name="password_confirmed"
                 dependencies={['password']}
                 hasFeedback
                 rules={[
@@ -211,7 +238,12 @@ function RegistrationForm(props = {}) {
                 />
             </Form.Item>
             <Form.Item>
-                <Button type="primary" htmlType="submit" className="login-form-button">
+                <Button
+                    type="primary"
+                    htmlType="submit"
+                    className="login-form-button"
+                    loading={loading}
+                >
                     Register
                 </Button>
                 Or <a onClick={enterLogin}>already has account? Log in</a>
