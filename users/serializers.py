@@ -59,8 +59,8 @@ class RegistrationSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ['url', 'username', 'email', 'password', 'password_confirmed']
-        read_only_fields = ['url']
+        fields = ['url', 'username', 'email', 'first_name', 'last_name', 'about', 'password', 'password_confirmed']
+        read_only_fields = ['url', 'first_name', 'last_name', 'about']
 
 
 class LoginSerializer(serializers.Serializer):

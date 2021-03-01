@@ -1,5 +1,5 @@
 from django.contrib.auth import logout, login
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, viewsets, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveUpdateAPIView
@@ -30,6 +30,14 @@ class UserViewSet(mixins.ListModelMixin,
 class RegistrationView(CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = RegistrationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        login(request, user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class LoginView(GenericAPIView):
