@@ -21,5 +21,5 @@ export const getUser = (id = 'self') => {
 }
 
 export const updateUser = (user, data) => {
-    return axios.update(user.url, data);
+    return axios.put(user.url, data);
 }
