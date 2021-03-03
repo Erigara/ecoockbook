@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {Button, Col, Divider, Drawer, Empty, Form, Row, Input, Modal, Upload, message} from "antd";
 import {PlusOutlined, LoadingOutlined} from '@ant-design/icons';
-import {updateUser} from "../api/usersApi";
-import {setFormErrors} from "../utils";
+import {updateUser} from "../../api/usersApi";
+import {setFormErrors} from "../../utils";
 import ImgCrop from "antd-img-crop";
 
 
