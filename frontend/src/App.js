@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {
     BrowserRouter as Router,
     Switch,
-    Route,
+    Route, Link,
 } from "react-router-dom";
 import {render} from "react-dom";
 import {Layout, Typography} from 'antd';
@@ -11,8 +11,10 @@ import './App.css';
 import {LoginRegisterModal} from "./components/Login";
 import MainMenu from "./components/MainMenu";
 import ProfileMenu from "./components/ProfileMenu";
-import Profile from "./pages/Profile";
+import Profile from "./pages/users/Profile";
 import {getUser} from "./api/usersApi";
+import CategoriesSwitch from "./pages/categories/CategoriesSwitch";
+import RecipesSwitch from "./pages/recipes/RecipesSwitch";
 
 
 const {Header, Content, Sider, Footer} = Layout;
@@ -33,7 +35,6 @@ export default function App() {
                 console.log(err.response);
             }
         })
-
     }, []);
 
     return (
@@ -41,9 +42,11 @@ export default function App() {
             <Router>
                 <Layout className="layout">
                     <Header>
-                        <Title className="logo" style={{color: 'white'}}>
-                            eCookBook
-                        </Title>
+                        <Link to="/">
+                            <Title className="logo" style={{color: 'white'}}>
+                                eCookBook
+                            </Title>
+                        </Link>
                         <div className="header-inline">
                             <LoginRegisterModal user={user} setUser={setUser}/>
                             <ProfileMenu user={user} setUser={setUser}/>
@@ -57,22 +60,16 @@ export default function App() {
                             <div className="site-layout-content">
                                 <Switch>
                                     <Route path="/categories">
-                                        <Categories/>
+                                        <CategoriesSwitch/>
+                                    </Route>
+                                    <Route path="/recipes">
+                                        <RecipesSwitch/>
                                     </Route>
                                     <Route path="/user">
                                         <User/>
                                     </Route>
                                     <Route path="/profile">
                                         <Profile user={user} setUser={setUser}/>
-                                    </Route>
-                                    <Route path="/own">
-                                        <Recipes kind={"own"}/>
-                                    </Route>
-                                    <Route path="/feed">
-                                        <Recipes kind={"feed"}/>
-                                    </Route>
-                                    <Route path="/favorites">
-                                        <Recipes kind={"favorites"}/>
                                     </Route>
                                     <Route path="/">
                                         <Home/>
@@ -92,17 +89,8 @@ function Home() {
     return <h2>Home</h2>;
 }
 
-function Categories() {
-    return <h2>Categories</h2>;
-}
-
 function User() {
     return <h2>User</h2>;
-}
-
-function Recipes(props = {}) {
-    const {kind} = props;
-    return <h2>{kind}</h2>;
 }
 
 const container = document.getElementById("app");
