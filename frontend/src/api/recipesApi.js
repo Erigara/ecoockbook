@@ -1,7 +1,8 @@
 import {axios} from './api';
 
-export const feed = () => {
-    return axios.get("api/cookbook/recipes/feed/");
+export const recipeList = (page = 1, kind) => {
+    let path = kind ? `${kind}/` : '';
+    return axios.get(`/api/cookbook/recipes/${path}?page=${page}`);
 }
 
 export const recipeLikes = (recipe) => {
@@ -32,4 +33,8 @@ export const recipeSteps = (recipe) => {
 export const recipeComments = (recipe) => {
     const {comments} = recipe;
     return axios.get(comments);
+}
+
+export const categoryList = (page = 1) => {
+    return axios.get(`api/cookbook/categories/?page=${page}`);
 }
