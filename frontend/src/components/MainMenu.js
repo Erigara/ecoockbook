@@ -16,13 +16,13 @@ export default function MainMenu() {
             </Menu.Item>
             <SubMenu key="recipes" icon={<NotificationOutlined/>} title="Recipes">
                 <Menu.Item key="own">
-                    <Link to="/own">Own</Link>
+                    <Link to="/recipes/own">Own</Link>
                 </Menu.Item>
                 <Menu.Item key="feed">
-                    <Link to="/feed">Feed</Link>
+                    <Link to="/recipes/feed">Feed</Link>
                 </Menu.Item>
                 <Menu.Item key="favorites">
-                    <Link to="/favorites">Favorites</Link>
+                    <Link to="/recipes/favorites">Favorites</Link>
                 </Menu.Item>
             </SubMenu>
         </Menu>
