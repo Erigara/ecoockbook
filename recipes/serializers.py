@@ -24,8 +24,8 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['url', 'name', 'image', 'recipes']
-        read_only_fields = ['url']
+        fields = ['url', 'pk', 'name', 'image', 'recipes']
+        read_only_fields = ['url', 'pk']
 
 
 class CookingTimeSerializer(serializers.ModelSerializer):
@@ -319,6 +319,7 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
         model = Recipe
         fields = [
             'url',
+            'pk',
             'likes',
             'title',
             'published',
@@ -335,4 +336,4 @@ class RecipeSerializer(serializers.HyperlinkedModelSerializer):
             'steps',
             'comments',
         ]
-        read_only_fields = ['url', 'publication_time', 'author', 'category']
+        read_only_fields = ['url', 'pk', 'publication_time', 'author', 'category']
