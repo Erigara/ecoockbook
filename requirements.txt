@@ -8,6 +8,8 @@ gunicorn==20.0.4
 paramiko==2.7.2
 phonenumbers==8.12.13
 Pillow==8.0.1
+pipdeptree==2.0.0
+pipreqs==0.4.10
 psycopg2==2.8.6
 redis==3.5.3
 text-unidecode==1.3
