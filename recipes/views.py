@@ -59,6 +59,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class RecipeComponentViewSet(RecipeMixin, viewsets.ModelViewSet):
+    pagination_class = None
     serializer_class = None
     model = None
 
