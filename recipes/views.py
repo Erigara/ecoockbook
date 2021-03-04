@@ -2,7 +2,6 @@ from django.db.models import Count
 from django.db.models.functions import Trunc
 from rest_framework import generics, viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
